@@ -1,7 +1,10 @@
 let scene, camera, renderer, balls = [], gravity, walls = [], light;
 
-init();
-requestOrientationPermission();
+document.getElementById('overlay').addEventListener('click', () => {
+  document.getElementById('overlay').style.display = 'none';
+  init();
+  requestOrientationPermission();
+});
 
 function init() {
   scene = new THREE.Scene();
@@ -42,7 +45,7 @@ function init() {
   const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xffffff, 0x000000, 0xffa500, 0x8a2be2];
   for (let i = 0; i < 10; i++) {
     const geometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const material = new THREE.MeshLambertMaterial({ color: colors[i], map: loader.load('https://example.com/path/to/texture.jpg') });
+    const material = new THREE.MeshLambertMaterial({ color: colors[i] });
     const ball = new THREE.Mesh(geometry, material);
     ball.position.set(Math.random() * 4 - 2, Math.random() * 4 - 2, Math.random() * 4 - 2);
     scene.add(ball);
