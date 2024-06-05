@@ -75,7 +75,7 @@ function handleOrientation(event) {
   const beta = event.beta ? event.beta : 0; // X-axis rotation in degrees.
   const gamma = event.gamma ? event.gamma : 0; // Y-axis rotation in degrees.
 
-  gravity = new THREE.Vector3(gamma / 90, beta / 90, 0);
+  gravity = new THREE.Vector3(gamma / 1800, beta / 1800, 0);
 
   // Adjust light position based on device orientation
   light.position.set(-gamma / 9, -beta / 9, 10).normalize();
@@ -83,14 +83,17 @@ function handleOrientation(event) {
   balls.forEach(ball => {
     ball.position.add(gravity);
     ball.geometry.vertices.forEach(vertex => {
-      vertex.add(new THREE.Vector3((Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1));
+      vertex.add(new THREE.Vector3((Math.random() - 0.5) * 0.01, (Math.random() - 0.5) * 0.01, (Math.random() - 0.5) * 0.01));
     });
     ball.geometry.verticesNeedUpdate = true;
 
     // Collision detection with box walls
-    if (ball.position.x > window.innerWidth / 200 || ball.position.x < -window.innerWidth / 200) ball.position.x *= -1;
-    if (ball.position.y > window.innerHeight / 200 || ball.position.y < -window.innerHeight / 200) ball.position.y *= -1;
-    if (ball.position.z > 5 || ball.position.z < -5) ball.position.z *= -1;
+    if (ball.position.x > window.innerWidth / 200 - 0.5) ball.position.x = window.innerWidth / 200 - 0.5;
+    if (ball.position.x < -window.innerWidth / 200 + 0.5) ball.position.x = -window.innerWidth / 200 + 0.5;
+    if (ball.position.y > window.innerHeight / 200 - 0.5) ball.position.y = window.innerHeight / 200 - 0.5;
+    if (ball.position.y < -window.innerHeight / 200 + 0.5) ball.position.y = -window.innerHeight / 200 + 0.5;
+    if (ball.position.z > 5 - 0.5) ball.position.z = 5 - 0.5;
+    if (ball.position.z < -5 + 0.5) ball.position.z = -5 + 0.5;
   });
 }
 
