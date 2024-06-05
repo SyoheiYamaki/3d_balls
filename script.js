@@ -41,7 +41,6 @@ function init() {
     walls.push(wall);
   });
 
-  const loader = new THREE.TextureLoader();
   const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xffffff, 0x000000, 0xffa500, 0x8a2be2];
   for (let i = 0; i < 10; i++) {
     const geometry = new THREE.SphereGeometry(0.5, 32, 32);
@@ -61,6 +60,8 @@ function requestOrientationPermission() {
       .then(permissionState => {
         if (permissionState === 'granted') {
           window.addEventListener('deviceorientation', handleOrientation);
+        } else {
+          alert("Permission denied for device orientation.");
         }
       })
       .catch(console.error);
