@@ -19,18 +19,16 @@ function init() {
   light.position.set(0, 10, 0).normalize();
   scene.add(light);
 
-  // Create walls to define the boundaries of the box
   const wallMaterial = new THREE.MeshLambertMaterial({ color: 0xcccccc, side: THREE.DoubleSide });
   const wallGeometry = new THREE.PlaneGeometry(window.innerWidth / 100, window.innerHeight / 100);
 
-  // Create the walls: left, right, top, bottom, front, back
   let positions = [
-    { x: -window.innerWidth / 200, y: 0, z: 0, rotation: { x: 0, y: Math.PI / 2, z: 0 } }, // left
-    { x: window.innerWidth / 200, y: 0, z: 0, rotation: { x: 0, y: -Math.PI / 2, z: 0 } }, // right
-    { x: 0, y: window.innerHeight / 200, z: 0, rotation: { x: -Math.PI / 2, y: 0, z: 0 } }, // top
-    { x: 0, y: -window.innerHeight / 200, z: 0, rotation: { x: Math.PI / 2, y: 0, z: 0 } }, // bottom
-    { x: 0, y: 0, z: -5, rotation: { x: 0, y: 0, z: 0 } }, // back
-    { x: 0, y: 0, z: 5, rotation: { x: Math.PI, y: 0, z: 0 } } // front
+    { x: -window.innerWidth / 200, y: 0, z: 0, rotation: { x: 0, y: Math.PI / 2, z: 0 } },
+    { x: window.innerWidth / 200, y: 0, z: 0, rotation: { x: 0, y: -Math.PI / 2, z: 0 } },
+    { x: 0, y: window.innerHeight / 200, z: 0, rotation: { x: -Math.PI / 2, y: 0, z: 0 } },
+    { x: 0, y: -window.innerHeight / 200, z: 0, rotation: { x: Math.PI / 2, y: 0, z: 0 } },
+    { x: 0, y: 0, z: -5, rotation: { x: 0, y: 0, z: 0 } },
+    { x: 0, y: 0, z: 5, rotation: { x: Math.PI, y: 0, z: 0 } }
   ];
 
   positions.forEach(pos => {
@@ -47,6 +45,7 @@ function init() {
     const material = new THREE.MeshLambertMaterial({ color: colors[i] });
     const ball = new THREE.Mesh(geometry, material);
     ball.position.set(Math.random() * 4 - 2, Math.random() * 4 - 2, Math.random() * 4 - 2);
+    ball.velocity = new THREE.Vector3(0, 0, 0);
     scene.add(ball);
     balls.push(ball);
   }
@@ -66,38 +65,60 @@ function requestOrientationPermission() {
       })
       .catch(console.error);
   } else {
-    // handle regular non iOS 13+ devices
     window.addEventListener('deviceorientation', handleOrientation);
   }
 }
 
 function handleOrientation(event) {
-  const beta = event.beta ? event.beta : 0; // X-axis rotation in degrees.
-  const gamma = event.gamma ? event.gamma : 0; // Y-axis rotation in degrees.
+  const beta = event.beta ? event.beta : 0;
+  const gamma = event.gamma ? event.gamma : 0;
 
-  gravity = new THREE.Vector3(gamma / 1800, beta / 1800, 0);
+  const x = gamma / 45; // X-axis
+  const y = beta / 45;  // Y-axis
 
-  // Adjust light position based on device orientation
+  gravity = new THREE.Vector3(x, y, 0);
+
   light.position.set(-gamma / 9, -beta / 9, 10).normalize();
-
-  balls.forEach(ball => {
-    ball.position.add(gravity);
-    ball.geometry.vertices.forEach(vertex => {
-      vertex.add(new THREE.Vector3((Math.random() - 0.5) * 0.01, (Math.random() - 0.5) * 0.01, (Math.random() - 0.5) * 0.01));
-    });
-    ball.geometry.verticesNeedUpdate = true;
-
-    // Collision detection with box walls
-    if (ball.position.x > window.innerWidth / 200 - 0.5) ball.position.x = window.innerWidth / 200 - 0.5;
-    if (ball.position.x < -window.innerWidth / 200 + 0.5) ball.position.x = -window.innerWidth / 200 + 0.5;
-    if (ball.position.y > window.innerHeight / 200 - 0.5) ball.position.y = window.innerHeight / 200 - 0.5;
-    if (ball.position.y < -window.innerHeight / 200 + 0.5) ball.position.y = -window.innerHeight / 200 + 0.5;
-    if (ball.position.z > 5 - 0.5) ball.position.z = 5 - 0.5;
-    if (ball.position.z < -5 + 0.5) ball.position.z = -5 + 0.5;
-  });
 }
 
 function animate() {
   requestAnimationFrame(animate);
+
+  balls.forEach(ball => {
+    ball.velocity.add(gravity.clone().multiplyScalar(0.01));
+    ball.position.add(ball.velocity);
+
+    // Collision detection with box walls
+    if (ball.position.x > window.innerWidth / 200 - 0.5 || ball.position.x < -window.innerWidth / 200 + 0.5) {
+      ball.velocity.x *= -1;
+      ball.position.x = Math.max(Math.min(ball.position.x, window.innerWidth / 200 - 0.5), -window.innerWidth / 200 + 0.5);
+    }
+    if (ball.position.y > window.innerHeight / 200 - 0.5 || ball.position.y < -window.innerHeight / 200 + 0.5) {
+      ball.velocity.y *= -1;
+      ball.position.y = Math.max(Math.min(ball.position.y, window.innerHeight / 200 - 0.5), -window.innerHeight / 200 + 0.5);
+    }
+    if (ball.position.z > 5 - 0.5 || ball.position.z < -5 + 0.5) {
+      ball.velocity.z *= -1;
+      ball.position.z = Math.max(Math.min(ball.position.z, 5 - 0.5), -5 + 0.5);
+    }
+
+    // Ball-to-ball collision detection
+    balls.forEach(otherBall => {
+      if (ball !== otherBall) {
+        const distance = ball.position.distanceTo(otherBall.position);
+        if (distance < 1) {
+          const direction = ball.position.clone().sub(otherBall.position).normalize();
+          ball.velocity.add(direction.clone().multiplyScalar(0.05));
+          otherBall.velocity.add(direction.clone().multiplyScalar(-0.05));
+        }
+      }
+    });
+
+    ball.geometry.vertices.forEach(vertex => {
+      vertex.add(new THREE.Vector3((Math.random() - 0.5) * 0.01, (Math.random() - 0.5) * 0.01, (Math.random() - 0.5) * 0.01));
+    });
+    ball.geometry.verticesNeedUpdate = true;
+  });
+
   renderer.render(scene, camera);
 }
