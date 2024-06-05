@@ -73,6 +73,10 @@ function handleOrientation(event) {
     const beta = event.beta ? event.beta : 0;
     const gamma = event.gamma ? event.gamma : 0;
 
+    if (!gravity) {
+      gravity = new THREE.Vector3(0, 0, 0);
+    }
+
     const x = gamma / 45; // X-axis
     const y = beta / 45;    // Y-axis
 
